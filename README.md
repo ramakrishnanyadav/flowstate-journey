@@ -61,7 +61,7 @@ But every single error—from the frustrating Firebase indexing issues to the ob
 Want to peek under the hood? Here’s how to get a local copy running.
 
 1.  **Clone the repo:**
-    `git clone https://github.com/your-username/flowstate-journey.git`
+    `git clone https://github.com/ramakrishnayadav/flowstate-journey.git`
 2.  **Jump in:**
     `cd flowstate-journey`
 3.  **Install dependencies:**
