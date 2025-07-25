@@ -1,0 +1,37 @@
+/* src/index.css */
+
+/* 1. Import the Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+/* 2. Add the base Tailwind styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* src/index.css */
+
+/* ... (your @import and @tailwind lines at the top) ... */
+
+/* Custom class for the breathing gradient border on inputs */
+.input-focus-gradient:focus-within {
+  border-color: transparent;
+  background-image: linear-gradient(to right, #8e44ad, #3498db, #8e44ad);
+  background-size: 200% auto;
+  animation: aurora 3s linear infinite;
+}
+
+/* Custom class for the glowing button effect on hover */
+.button-glow-effect:hover {
+  box-shadow: 0 0 15px 5px rgba(52, 152, 219, 0.4), 0 0 5px 1px rgba(142, 68, 173, 0.5);
+}
+
+/* 3. Define our custom styles */
+body {
+  /* Set our new font as the default */
+  font-family: 'Inter', sans-serif; 
+  /* Set the background image */
+  background-image: url('./assets/images/background.jpg'); /* <-- Make sure this path is correct! */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
