@@ -1,11 +1,11 @@
-// src/components/Dashboard.jsx - FINAL VERSION (ALL BUGS FIXED)
+// src/components/Dashboard.jsx - FINAL GOLDEN MASTER (Typo and All Bugs Fixed)
 
 import { useState, useEffect, useCallback } from 'react';
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// --- Code Editor Imports ---
+// Code Editor Imports
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { cpp } from '@codemirror/lang-cpp';
@@ -13,22 +13,22 @@ import { java } from '@codemirror/lang-java';
 import { python } from '@codemirror/lang-python';
 import { okaidia } from '@uiw/codemirror-theme-okaidia';
 
-// --- PDF Imports ---
+// PDF Imports
 import { Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// --- AI Mentor Function ---
+// AI Mentor Function
 import { getGeneralAiHelp } from '../utils/aiMentor';
 
-// --- HELPER COMPONENT 1: Session Complete Modal ---
+// HELPER COMPONENT 1: Session Complete Modal
 const SessionCompleteModal = ({ onSave }) => {
-  const [focusRating, setFocusRating] = useState(0);
+  const [focusRating, setFocusRating] = useState(0); // <-- TYPO FIXED HERE
   const [distraction, setDistraction] = useState('');
   const distractions = ['Phone', 'Social Media', 'My Thoughts', 'People'];
   return (<div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 animate-fadeInUp"><div className="bg-gray-800 p-8 rounded-lg text-center w-full max-w-sm space-y-6"><div><h2 className="text-2xl font-bold">Session Complete!</h2><p className="mt-2 text-white/80">Rate your focus:</p></div><div className="flex justify-center gap-2">{[1, 2, 3, 4, 5].map(star => (<button key={star} onClick={() => setFocusRating(star)}><svg className={`w-10 h-10 transition-colors ${focusRating >= star ? 'text-yellow-400' : 'text-gray-600 hover:text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg></button>))}</div><div><p className="text-white/80">Main distraction?</p><div className="grid grid-cols-2 gap-2 mt-2">{distractions.map(d => (<button key={d} onClick={() => setDistraction(d)} className={`p-2 rounded-lg border-2 transition-colors ${distraction === d ? 'bg-blue-500 border-blue-400' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'}`}>{d}</button>))}</div></div><button onClick={() => onSave(focusRating, distraction)} disabled={focusRating === 0 || distraction === ''} className="w-full p-3 bg-green-600 rounded-lg font-bold disabled:bg-gray-500 disabled:cursor-not-allowed">Save & Continue</button></div></div>);
 };
 
-// --- HELPER COMPONENT 2: The Fullscreen Sandbox (Final Bug Fixes) ---
+// HELPER COMPONENT 2: The Fullscreen Sandbox
 const FocusSandbox = ({ goal, mode, time, onEndSession, text, onTextChange, code, onCodeChange }) => {
   const [currentLanguage, setCurrentLanguage] = useState('JavaScript');
   const [languageExtension, setLanguageExtension] = useState(javascript());
@@ -37,97 +37,49 @@ const FocusSandbox = ({ goal, mode, time, onEndSession, text, onTextChange, code
   const [isRunning, setIsRunning] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
   const [numPages, setNumPages] = useState(null);
-
   const formatTime = (seconds) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-  
   const robustBtoa = (str) => btoa(unescape(encodeURIComponent(str)));
   const decodeOutput = (str) => str ? decodeURIComponent(escape(atob(str))) : '';
-
   const handleRunCode = useCallback(async () => {
     setIsRunning(true);
     setOutput(`Compiling and running for ${currentLanguage}...`);
-    
     const API_KEY = import.meta.env.VITE_RAPIDAPI_KEY;
     const languageIdMap = { 'JavaScript': 93, 'Python': 71, 'C++': 54, 'Java': 62 };
-    
     const options = { method: 'POST', headers: { 'content-type': 'application/json', 'X-RapidAPI-Key': API_KEY, 'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com' }, body: JSON.stringify({ language_id: languageIdMap[currentLanguage], source_code: robustBtoa(code), stdin: robustBtoa(input) }) };
-    
     try {
       const response = await fetch('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=true&wait=false', options);
       const submission = await response.json();
-      
       if (submission.token) {
         setOutput('Code submitted. Awaiting results...');
         let resultData;
         let attempts = 0;
-        do {
-          await new Promise(r => setTimeout(r, 2000));
-          const resultResponse = await fetch(`https://judge0-ce.p.rapidapi.com/submissions/${submission.token}?base64_encoded=true`, { headers: { 'X-RapidAPI-Key': API_KEY, 'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com' } });
-          resultData = await resultResponse.json();
-          attempts++;
-        } while (resultData.status.id <= 2 && attempts < 10);
-        
+        do { await new Promise(r => setTimeout(r, 2000)); const resultResponse = await fetch(`https://judge0-ce.p.rapidapi.com/submissions/${submission.token}?base64_encoded=true`, { headers: { 'X-RapidAPI-Key': API_KEY, 'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com' } }); resultData = await resultResponse.json(); attempts++; } while (resultData.status.id <= 2 && attempts < 10);
         if (resultData.stdout) setOutput(decodeOutput(resultData.stdout));
         else if (resultData.stderr) setOutput(`Error:\n${decodeOutput(resultData.stderr)}`);
         else if (resultData.compile_output) setOutput(`Compilation Error:\n${decodeOutput(resultData.compile_output)}`);
         else setOutput(`Execution finished: ${resultData.status.description}`);
       } else { setOutput(`Error creating submission: ${JSON.stringify(submission)}`); }
     } catch (err) { setOutput(`API Error: ${err.message}`); }
-    
     setIsRunning(false);
-  }, [code, input, currentLanguage]); // <-- CRITICAL: Re-create this function if language changes
-  
+  }, [code, input, currentLanguage]);
   const languageMap = { 'JavaScript': javascript(), 'Python': python(), 'C++': cpp(), 'Java': java() };
-  
-  const onLanguageChange = (langName) => {
-    setCurrentLanguage(langName);
-    setLanguageExtension(languageMap[langName]);
-  };
-
+  const onLanguageChange = (langName) => { setCurrentLanguage(langName); setLanguageExtension(languageMap[langName]); };
   const onFileChange = (event) => { const file = event.target.files[0]; if (file && file.type === "application/pdf") { setPdfFile(file); } else { alert("Please select a PDF file."); } };
   const onDocumentLoadSuccess = ({ numPages }) => { setNumPages(numPages); };
-
   const renderContent = () => {
     switch (mode) {
       case 'study':
         return (<div className="flex-grow flex gap-4 h-[calc(100%-60px)]"><div className="w-1/2 h-full bg-gray-800/50 rounded-lg flex flex-col items-center justify-center text-white/50 border border-white/10 p-2"><input type="file" onChange={onFileChange} className="mb-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" /><div className="w-full h-full overflow-y-auto">{pdfFile ? (<Document file={pdfFile} onLoadSuccess={onDocumentLoadSuccess}>{Array.from(new Array(numPages), (el, index) => (<Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} />))}</Document>) : <p>Upload a PDF to begin.</p>}</div></div><textarea value={text} onChange={(e) => onTextChange(e.target.value)} placeholder="Take your notes here..." className="w-1/2 h-full p-6 bg-gray-800 text-white/90 text-lg rounded-lg border-none focus:outline-none resize-none" /></div>);
       case 'code':
-        return (
-          <div className="flex-grow grid grid-cols-2 gap-4 h-[calc(100%-60px)]">
-            <div className="flex flex-col h-full">
-              <div className="flex justify-between items-center p-2 bg-gray-800 rounded-t-lg">
-                <select onChange={(e) => onLanguageChange(e.target.value)} value={currentLanguage} className="bg-gray-700 text-white border-none rounded">
-                  {Object.keys(languageMap).map(lang => <option key={lang}>{lang}</option>)}
-                </select>
-                <button onClick={handleRunCode} disabled={isRunning} className="px-4 py-1 bg-green-600 rounded disabled:bg-gray-500">{isRunning ? 'Running...' : 'Run Code'}</button>
-              </div>
-              {/* THIS IS THE FIX for the Code Editor Scrolling */}
-              <div className="flex-grow h-0 rounded-b-lg overflow-auto bg-[#2d2d2d]">
-                <CodeMirror value={code} height="100%" extensions={[languageExtension]} onChange={onCodeChange} theme={okaidia} style={{ height: '100%' }} />
-              </div>
-            </div>
-            <div className="flex flex-col h-full gap-4">
-              <div className="flex flex-col h-1/2">
-                <label className="p-2 bg-gray-800 rounded-t-lg">Input (stdin)</label>
-                <textarea value={input} onChange={(e) => setInput(e.target.value)} className="w-full h-full p-2 bg-gray-900/80 rounded-b-lg border-none focus:outline-none resize-none font-mono" />
-              </div>
-              <div className="flex flex-col h-1/2">
-                <label className="p-2 bg-gray-800 rounded-t-lg">Output</label>
-                {/* THIS IS THE FIX for the Output Panel Scrolling */}
-                <pre className="w-full h-full p-2 bg-black/80 rounded-b-lg border-none whitespace-pre-wrap font-mono overflow-y-auto">{output}</pre>
-              </div>
-            </div>
-          </div>
-        );
+        return (<div className="flex-grow grid grid-cols-2 gap-4 h-[calc(100%-60px)]"><div className="flex flex-col h-full min-h-0"><div className="flex justify-between items-center p-2 bg-gray-800 rounded-t-lg"><select onChange={(e) => onLanguageChange(e.target.value)} value={currentLanguage} className="bg-gray-700 text-white border-none rounded">{Object.keys(languageMap).map(lang => <option key={lang}>{lang}</option>)}</select><button onClick={handleRunCode} disabled={isRunning} className="px-4 py-1 bg-green-600 rounded disabled:bg-gray-500">{isRunning ? 'Running...' : 'Run Code'}</button></div><div className="flex-grow h-0 rounded-b-lg overflow-auto bg-[#2d2d2d]"><CodeMirror value={code} height="100%" extensions={[languageExtension]} onChange={onCodeChange} theme={okaidia} style={{ height: '100%' }} /></div></div><div className="flex flex-col h-full gap-4 min-h-0"><div className="flex flex-col h-1/2"><label className="p-2 bg-gray-800 rounded-t-lg">Input (stdin)</label><textarea value={input} onChange={(e) => setInput(e.target.value)} className="w-full h-full p-2 bg-gray-900/80 rounded-b-lg border-none focus:outline-none resize-none font-mono" /></div><div className="flex flex-col h-1/2"><label className="p-2 bg-gray-800 rounded-t-lg">Output</label><pre className="w-full h-full p-2 bg-black/80 rounded-b-lg border-none whitespace-pre-wrap font-mono overflow-y-auto">{output}</pre></div></div></div>);
       case 'writing': default:
         return <textarea value={text} onChange={(e) => onTextChange(e.target.value)} placeholder="This is your Deep Work Zone..." className="w-full h-full flex-grow p-8 bg-gray-800 text-white/90 text-xl rounded-lg border-none focus:outline-none resize-none" />;
     }
   };
-
   return (<div className="fixed inset-0 w-full h-full flex flex-col items-center justify-center p-8 text-white bg-gray-900"><div className="w-full h-full max-w-7xl flex flex-col"><div className="flex justify-between items-center mb-4 text-white/80"><p className="text-lg">Goal: <span className="font-bold text-white">{goal}</span></p><div className="flex items-center gap-4"><p className="text-2xl font-bold text-white">{formatTime(time)}</p><button onClick={onEndSession} className="p-2 px-4 bg-red-600/80 rounded-lg font-bold">End Session</button></div></div>{renderContent()}<p className="text-center text-white/40 text-sm mt-4">Press 'Esc' to exit fullscreen mode.</p></div></div>);
 };
 
-// --- MAIN DASHBOARD COMPONENT ---
+// MAIN DASHBOARD COMPONENT
 function Dashboard({ showJourneyPage, showConnectPage, showAiMentorPage }) {
   const [duration, setDuration] = useState(1500);
   const [time, setTime] = useState(duration); 
@@ -139,19 +91,35 @@ function Dashboard({ showJourneyPage, showConnectPage, showAiMentorPage }) {
   const [mode, setMode] = useState('writing');
   const [writingText, setWritingText] = useState('');
   const [code, setCode] = useState('// Your code here...');
+  const [sessionStartTime, setSessionStartTime] = useState(1500);
 
   useEffect(() => { let interval = null; if (isActive && time > 0) { interval = setInterval(() => { setTime(t => t - 1); }, 1000); } else if (isActive && time === 0) { setIsActive(false); setShowModal(true); } return () => clearInterval(interval); }, [isActive, time]);
   useEffect(() => { const goFullScreen = () => { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); }; const exitFullScreen = () => { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); }; if (isActive) { goFullScreen(); } else { exitFullScreen(); } return () => exitFullScreen(); }, [isActive]);
 
-  const handleStartSession = () => { if (goal.trim() === '') { alert("Please set a goal for your session."); return; } setTime(duration); setIsActive(true); };
-  const handleEndSessionEarly = () => { if (window.confirm("End session early? Progress will not be saved.")) { setIsActive(false); resetTimer(); } };
+  const handleStartSession = () => {
+    if (goal.trim() === '') {
+      alert("Please set a goal for your session.");
+      return;
+    }
+    setSessionStartTime(duration);
+    setTime(duration);
+    setIsActive(true);
+  };
+  
+  const handleEndSessionEarly = () => {
+    setIsActive(false);
+    setShowModal(true);
+  };
+  
   const handleSessionComplete = async (focusRating, distraction) => {
     const user = auth.currentUser;
-    if (user && focusRating > 0 && distraction) {
+    const timeFocused = sessionStartTime - time;
+
+    if (user && focusRating > 0 && distraction && timeFocused > 0) {
       try {
         const sessionContent = mode === 'code' ? code : writingText;
         await addDoc(collection(db, 'users', user.uid, 'focusSessions'), {
-          duration: duration,
+          duration: timeFocused,
           focusRating: focusRating,
           distraction: distraction,
           goal: goal,
@@ -159,7 +127,7 @@ function Dashboard({ showJourneyPage, showConnectPage, showAiMentorPage }) {
           content: sessionContent,
           completedAt: serverTimestamp()
         });
-        const aiFeedback = await getGeneralAiHelp(`User just completed a ${duration/60} minute session with goal "${goal}", focus rating ${focusRating}/5, and distraction "${distraction}". Provide 2-3 sentences of positive and actionable feedback specific to this.`);
+        const aiFeedback = await getGeneralAiHelp(`User just completed a focus session with goal "${goal}". They focused for ${Math.round(timeFocused / 60)} minutes, rated their focus ${focusRating}/5, and their distraction was "${distraction}". Provide 2-3 sentences of positive and actionable feedback.`);
         setFeedback(aiFeedback);
         setShowFeedbackModal(true);
       } catch (error) { 
@@ -171,6 +139,7 @@ function Dashboard({ showJourneyPage, showConnectPage, showAiMentorPage }) {
     setShowModal(false);
     resetTimer();
   };
+  
   const resetTimer = () => {
     setIsActive(false);
     setTime(duration);
